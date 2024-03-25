@@ -1,56 +1,151 @@
-/*
- * @Author: JaspinXu sea.xuo@gmail.com
- * @Date: 2024-03-19 15:29:11
- * @LastEditors: JaspinXu sea.xuo@gmail.com
- * @LastEditTime: 2024-03-19 16:35:41
- * @FilePath: \web-frontend\src\pages\base\lab\index.tsx
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
-import { CloudUploadOutlined, UploadOutlined, UserOutlined } from "@ant-design/icons";
-import { PageContainer } from "@ant-design/pro-components";
-import { Avatar, Button, ColorPicker, Flex, Progress, Space, Upload, message } from "antd";
-import { UploadProps } from "antd/lib/upload";
-import { values } from "lodash";
+import { deleteLab, listLab } from '@/services/api/lab';
+import { convertPageData, orderBy, waitTime } from '@/utils/request';
+import { openConfirm } from '@/utils/ui';
+import { PlusOutlined, DeleteOutlined, ExportOutlined } from '@ant-design/icons';
+import { ActionType, PageContainer, ProColumns, ProTable } from '@ant-design/pro-components';
+import { Button } from 'antd';
+import { useRef, useState } from 'react';
+import { downloadFile } from '@/utils/download-utils';
+import { Link } from '@umijs/max';
+import InputDialog from './InputDialog';
 
-export default() => {
-    const props: UploadProps = {
-        name: 'file',
-        action: 'https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188',
-        headers: {
-          authorization: 'authorization-text',
-        },
-        onChange(info) {
-          if (info.file.status !== 'uploading') {
-            console.log(info.file, info.fileList);
-          }
-          if (info.file.status === 'done') {
-            message.success(`${info.file.name} file uploaded successfully`);
-          } else if (info.file.status === 'error') {
-            message.error(`${info.file.name} file upload failed.`);
-          }
-        },
-      };
-      const App1: React.FC = () => (
-        <Upload {...props}>
-          <Button>Click to Upload</Button>
-        </Upload>
-      );
-      const App2: React.FC = () => (
-        <Flex vertical gap="small" style={{ width: 180 }}>
-         <Progress percent={20} status="exception" />
-         <Progress percent={50} status="active" />
-         <Progress percent={100} />
-        </Flex>
-      );
-    return <PageContainer>
-        <Space>
-        <Button danger type = "primary">新建实验室</Button>
-        <ColorPicker defaultValue="#1677ff" />
-        <App1> </App1>
-        <Avatar style={{ backgroundColor: '#87d068' }} />
-        <App2> </App2>
-        </Space>
-    </PageContainer>;
+export default () => {
+  const refAction = useRef<ActionType>(null);
+  const [selectedRowKeys, selectRow] = useState<number[]>([]);
+  const [importVisible, setImportVisible] = useState(false);
+  const [lab, setLab] = useState<API.LabVO>();
+  const [searchProps, setSearchProps] = useState<API.LabQueryDTO>({});
+  const [visible, setVisible] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const columns: ProColumns<API.LabVO>[] = [
+    {
+      title: '实验室ID',
+      dataIndex: 'id',
+      width: 100,
+      search: false,
+    },
+    {
+      title: '实验室名称',
+      dataIndex: 'labName',
+      width: 100,
+      render: (dom, record) => {
+        return (
+          <a
+            onClick={() => {
+              setLab(record);
+              setVisible(true);
+            }}
+          >
+            {dom}
+          </a>
+        );
+      },
+    },
+    {
+      title: '实验室编码',
+      dataIndex: 'labCode',
+      width: 100,
+      search: false,
+    },
+    {
+      title: '占据状态',
+      dataIndex: 'occupy',
+      width: 100,
+      search: false,
+    },
+    {
+      title: '实验容量',
+      dataIndex: 'studentMax',
+      width: 100,
+      search: false,
+    },
+    {
+      title: '备注',
+      dataIndex: 'description',
+      search: false,
+    },
+    {
+      title: '创建人',
+      dataIndex: 'createdByDesc',
+      width: 100,
+      search: false,
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'createdAt',
+      width: 150,
+      search: false,
+    },
+    {
+      title: '操作',
+      width: 100,
+      fixed: 'right',
+      dataIndex: 'option',
+      valueType: 'option',
+      render: (_, record) => [<Link to={`detail?id=${record.id}`}>修改</Link>],
+    },
+  ];
+
+  const handleDelete = async () => {
+    if (!selectedRowKeys?.length) return;
+    openConfirm(`您确定删除${selectedRowKeys.length}条记录吗`, async () => {
+      await deleteLab(selectedRowKeys);
+      refAction.current?.reload();
+    });
+  };
+
+
+  return (
+    <PageContainer>
+      <ProTable<API.LabVO>
+        actionRef={refAction}
+        rowKey="id"
+        request={async (params = {}, sort) => {
+          const props = {
+            ...params,
+            orderBy: orderBy(sort),
+          };
+          setSearchProps(props);
+          return convertPageData(await listLab(props));
+        }}
+        toolBarRender={() => [
+          <Button
+            type="primary"
+            key="primary"
+            onClick={() => {
+              setLab(undefined);
+              setVisible(true);
+            }}
+          >
+            <PlusOutlined onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined} /> 新建
+          </Button>,
+          <Button
+            type="primary"
+            key="primary"
+            danger
+            onClick={handleDelete}
+            disabled={!selectedRowKeys?.length}
+          >
+            <DeleteOutlined onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined} /> 删除
+          </Button>,
+        ]}
+        columns={columns}
+        rowSelection={{
+          onChange: (rowKeys) => {
+            selectRow(rowKeys as number[]);
+          },
+        }}
+      />
+      <InputDialog
+        detailData={lab}
+        onClose={(result) => {
+          setVisible(false);
+          result && refAction.current?.reload();
+        }}
+        visible={visible}
+      />
+    </PageContainer>
+  );
 };
 
 
