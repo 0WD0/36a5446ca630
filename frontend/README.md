@@ -1,57 +1,106 @@
-# Ant Design Pro
+# Laboratory Reservation System — Web Frontend
 
-本项目基于Ant design pro改造，支持操作员权限配置，和web-backend配套使用
+An operator-facing web application for managing laboratories, semesters, schedules, administrators, privileges, login logs, and online users.
 
-## Environment Prepare
+Built with React, TypeScript, Ant Design Pro, and Umi Max. This repository is the frontend half of a full-stack course project and connects to the companion [Spring Boot backend](https://github.com/JaspinXu/lab-reservation-system-web-backend).
 
-Install `node_modules`:
+## Highlights
 
-```bash
-npm install
+- Role- and privilege-aware navigation and page access.
+- CRUD workflows for laboratories, semesters, and reservation schedules.
+- Administrator and permission configuration.
+- Login-log and online-user monitoring.
+- Reusable chart, table, form, and dialog components.
+- Typed API integration with a local development proxy.
+
+## Tech stack
+
+| Area | Technology |
+|---|---|
+| UI | React 18, Ant Design 5, Ant Design Pro Components |
+| Framework | Umi Max 4 |
+| Language | TypeScript |
+| Charts | ECharts |
+| Quality | ESLint, Prettier, Jest, TypeScript |
+| Package manager | pnpm |
+
+## Application modules
+
+```text
+Login
+├── Base data
+│   ├── Laboratories
+│   ├── Semesters
+│   ├── Schedules
+│   └── Presets
+└── System administration
+    ├── Administrators and privileges
+    ├── Login logs
+    └── Online users
 ```
 
-or
+## Getting started
+
+### Prerequisites
+
+- Node.js 16 or newer
+- pnpm
+- The backend running on `http://localhost:9311`
 
 ```bash
-yarn
+git clone https://github.com/JaspinXu/lab-reservation-system-web-frontend.git
+cd lab-reservation-system-web-frontend
+pnpm install
+pnpm start
 ```
 
-## Provided Scripts
+Open `http://localhost:8000`. Requests beginning with `/api/` are proxied to the backend configured in [`config/proxy.ts`](config/proxy.ts).
 
-Ant Design Pro provides some useful script to help you quick start and build with web project, code style check and test.
-
-Scripts provided in `package.json`. It's safe to modify or add additional script:
-
-### Start project
+To run without a backend for UI-only development, use the project's mock configuration:
 
 ```bash
-npm start
+pnpm dev
 ```
 
-### Build project
+## Useful commands
 
 ```bash
-npm run build
+pnpm start          # development server with backend proxy
+pnpm build          # production build
+pnpm lint           # ESLint, Prettier, and TypeScript checks
+pnpm test           # Jest test suite
+pnpm test:coverage  # tests with coverage
 ```
 
-### Check code style
+## Project structure
 
-```bash
-npm run lint
+```text
+config/
+  routes.ts          Route and access-control configuration
+  proxy.ts           Local backend proxy
+src/
+  pages/base/        Laboratory, semester, schedule, and preset modules
+  pages/system/      Administrator, login-log, and online-user modules
+  pages/User/        Authentication UI
+  components/        Shared charts and interface components
+  utils/             Requests, files, hooks, and UI helpers
+mock/                Local mock endpoints
+tests/               Frontend test setup
 ```
 
-You can also use script to auto fix some lint error:
+## Backend
 
-```bash
-npm run lint:fix
-```
+The matching API server is maintained separately:
 
-### Test code
+- Repository: [lab-reservation-system-web-backend](https://github.com/JaspinXu/lab-reservation-system-web-backend)
+- Default local port: `9311`
+- Swagger UI after startup: `http://localhost:9311/swagger-ui/index.html`
 
-```bash
-npm test
-```
+## Project context
 
-## More
+This system was developed for a software-engineering practicum at Shandong University. The repository keeps the original course-project architecture and is presented as a portfolio artifact rather than a production deployment.
 
-You can view full document on our [official website](https://pro.ant.design). And welcome any feedback in our [github](https://github.com/ant-design/ant-design-pro).
+## License
+
+[MIT](LICENSE)
+
